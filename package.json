@@ -6,13 +6,24 @@
     "dev": "next dev --port 3026",
     "build": "next build",
     "start": "next start --port 3026",
-    "lint": "eslint"
+    "lint": "eslint",
+    "vercel:env": "node -e \"console.log('Nastav ve Vercelu (Settings → Environment Variables):\\n'); ['RESEND_API_KEY','RESEND_FROM_EMAIL','ORDER_NOTIFY_EMAIL','DEEPSEEK_API_KEY','DEEPSEEK_MODEL','DEEPSEEK_API_BASE_URL','NEXT_PUBLIC_APP_URL'].forEach(k=>console.log('  -',k)); console.log('\\nHodnoty z .env / .env.local — viz .env.example')\"",
+    "ai": "powershell -ExecutionPolicy Bypass -File ./scripts/opencode-cli.ps1",
+    "ai:help": "powershell -ExecutionPolicy Bypass -File ./scripts/opencode-cli.ps1 help",
+    "ai:review": "powershell -ExecutionPolicy Bypass -File ./scripts/opencode-cli.ps1 review",
+    "soul": "powershell -ExecutionPolicy Bypass -File ./scripts/soul-builder.ps1",
+    "soul:init": "powershell -ExecutionPolicy Bypass -File ./scripts/soul-builder.ps1 init",
+    "soul:status": "powershell -ExecutionPolicy Bypass -File ./scripts/soul-builder.ps1 status",
+    "git:ai-hooks": "powershell -ExecutionPolicy Bypass -File ./scripts/git-ai-hooks.ps1",
+    "git:ai-hooks:install": "powershell -ExecutionPolicy Bypass -File ./scripts/git-ai-hooks.ps1 install",
+    "git:ai-hooks:status": "powershell -ExecutionPolicy Bypass -File ./scripts/git-ai-hooks.ps1 status"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
     "@radix-ui/react-checkbox": "^1.3.3",
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-slot": "^1.2.4",
+    "@react-pdf/renderer": "^4.3.2",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
@@ -21,6 +32,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "react-hook-form": "^7.72.0",
+    "resend": "^6.9.4",
     "tailwind-merge": "^3.5.0",
     "zod": "^4.3.6"
   },

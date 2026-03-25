@@ -1,0 +1,9 @@
+# Lokální artefakty při `vercel` CLI (build běží na Vercelu)
+.next
+.vercel
+coverage
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

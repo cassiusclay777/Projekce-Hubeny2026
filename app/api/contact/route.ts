@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { buildOrderRequestPdfBuffer } from "@/lib/order-request-pdf";
+import { getContactMailConfig } from "@/lib/server-env";
+import { sendContactNotification } from "@/lib/send-contact-email";
+
+export const runtime = "nodejs";
 
 const bodySchema = z.object({
   name: z.string().min(2),
@@ -20,8 +25,49 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
-    // Zde lze napojit e-mail (Resend, SMTP) nebo uložení do DB.
-    return NextResponse.json({ ok: true });
+
+    const mailCfg = getContactMailConfig();
+    if (!mailCfg) {
+      console.error("contact: missing RESEND_API_KEY, RESEND_FROM_EMAIL or ORDER_NOTIFY_EMAIL");
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "Odesílání e-mailu není na serveru nakonfigurováno. Zkuste prosím zavolat nebo napsat přímo.",
+        },
+        { status: 503 }
+      );
+    }
+
+    let pdfBuffer: Buffer | undefined;
+    try {
+      pdfBuffer = await buildOrderRequestPdfBuffer(parsed.data);
+    } catch (e) {
+      console.error("contact: PDF", e);
+    }
+
+    try {
+      await sendContactNotification(mailCfg, parsed.data, {
+        pdfBuffer,
+      });
+    } catch (e) {
+      console.error("contact: Resend", e);
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            "E-mail se nepodařilo odeslat. Zkuste to prosím znovu později nebo volejte přímo.",
+        },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      ...(pdfBuffer?.length
+        ? { pdfBase64: pdfBuffer.toString("base64") }
+        : {}),
+    });
   } catch {
     return NextResponse.json({ ok: false }, { status: 400 });
   }

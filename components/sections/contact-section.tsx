@@ -41,6 +41,7 @@ const MAP_EMBED =
 export function ContactSection() {
   const reduce = useReducedMotion();
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -59,16 +60,57 @@ export function ContactSection() {
   const gdpr = useWatch({ control, name: "gdpr", defaultValue: false });
 
   async function onSubmit(data: FormValues) {
+    setSubmitError(null);
     const res = await fetch("/api/contact", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
+    const payload: unknown = await res.json().catch(() => ({}));
+    const errMsg =
+      typeof payload === "object" &&
+      payload !== null &&
+      "error" in payload &&
+      typeof (payload as { error: unknown }).error === "string"
+        ? (payload as { error: string }).error
+        : null;
+
+    const pdfBase64 =
+      typeof payload === "object" &&
+      payload !== null &&
+      "pdfBase64" in payload &&
+      typeof (payload as { pdfBase64: unknown }).pdfBase64 === "string"
+        ? (payload as { pdfBase64: string }).pdfBase64
+        : null;
+
     if (res.ok) {
+      if (pdfBase64) {
+        try {
+          const bytes = Uint8Array.from(atob(pdfBase64), (c) => c.charCodeAt(0));
+          const blob = new Blob([bytes], { type: "application/pdf" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `poptavka-projekce-hubeny-${new Date().toISOString().slice(0, 10)}.pdf`;
+          a.rel = "noopener";
+          a.click();
+          URL.revokeObjectURL(url);
+        } catch {
+          /* stažení PDF je doplňkové */
+        }
+      }
       setSubmitted(true);
       reset();
       setTimeout(() => setSubmitted(false), 5000);
+      return;
     }
+
+    setSubmitError(
+      errMsg ??
+        (res.status >= 500
+          ? "Server je dočasně nedostupný. Zkuste to prosím znovu nebo zavolejte."
+          : "Odeslání se nezdařilo. Zkontrolujte údaje nebo nás kontaktujte jinak.")
+    );
   }
 
   return (
@@ -225,6 +267,12 @@ export function ContactSection() {
                 </p>
               )}
 
+              {submitError && (
+                <p className="text-sm text-red-600" role="alert">
+                  {submitError}
+                </p>
+              )}
+
               <AnimatePresence mode="wait">
                 {submitted && (
                   <motion.div
@@ -235,7 +283,9 @@ export function ContactSection() {
                     role="status"
                   >
                     <CheckCircle2 className="size-5 shrink-0" aria-hidden />
-                    Děkujeme, zpráva byla odeslána. Brzy se ozvu.
+                    Děkujeme, zpráva byla odeslána. Brzy se ozvu. Pokud váš
+                    prohlížeč neblokuje stahování, měl by se uložit i soubor PDF
+                    s kopií poptávky.
                   </motion.div>
                 )}
               </AnimatePresence>

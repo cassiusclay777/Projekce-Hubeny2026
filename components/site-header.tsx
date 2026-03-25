@@ -12,6 +12,7 @@ const nav = [
   { href: "#o-mne", label: "O mně" },
   { href: "#sluzby", label: "Služby" },
   { href: "#projekty", label: "Projekty" },
+  { href: "#asistent", label: "Dotazy" },
   { href: "#kontakt", label: "Kontakt" },
 ];
 
