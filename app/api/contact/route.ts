@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { buildOrderRequestPdfBuffer } from "@/lib/order-request-pdf";
@@ -5,6 +6,10 @@ import { getContactMailConfig } from "@/lib/server-env";
 import { sendContactNotification } from "@/lib/send-contact-email";
 
 export const runtime = "nodejs";
+
+type ContactResponse =
+  | { ok: true; requestId: string }
+  | { ok: false; error: string };
 
 const bodySchema = z.object({
   name: z.string().min(2),
@@ -62,8 +67,9 @@ export async function POST(req: Request) {
       );
     }
 
-    return NextResponse.json({
+    return NextResponse.json<ContactResponse>({
       ok: true,
+      requestId: randomUUID(),
       ...(pdfBuffer?.length
         ? { pdfBase64: pdfBuffer.toString("base64") }
         : {}),
